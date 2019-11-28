@@ -159,14 +159,14 @@ const funOps = {
     },
     avg: () => { },
     count: () => { }
-}
+};
 
 
 
 // This function transforms the data to give expected output as explained above.
 const massageData = (data, dimensions, groupBy, measures) => {
     const result = {};
-    result.output = {}
+    result.output = {};
 
     // container reference to hold last dimension object.
     let container = result.output;
@@ -177,10 +177,10 @@ const massageData = (data, dimensions, groupBy, measures) => {
             // Assigne empty object if value is not assigned already.
             container[d] = container[d] || {};
 
-            const dimensionObj  = container[d]
+            const dimensionObj  = container[d];
             const dimensionValueInEl = el[d];
 
-            dimensionObj[dimensionValueInEl] = dimensionObj[dimensionValueInEl] || {}
+            dimensionObj[dimensionValueInEl] = dimensionObj[dimensionValueInEl] || {};
 
             // If last dimension
             if (i === dimensions.length - 1) {
@@ -191,8 +191,8 @@ const massageData = (data, dimensions, groupBy, measures) => {
                 groupBy.forEach((g, j) => {
 
                     lastG[g] = lastG[g] || {};
-                    const groupObj = lastG[g]
-                    const groupValueInEl = el[g]
+                    const groupObj = lastG[g];
+                    const groupValueInEl = el[g];
 
                     groupObj[groupValueInEl] = groupObj[groupValueInEl] || {};
 
@@ -202,21 +202,21 @@ const massageData = (data, dimensions, groupBy, measures) => {
                         // m is the measure
                         measures.forEach(m => {
                             const previousMeasureVal = groupObj[groupValueInEl][m.name] || 0;
-                            groupObj[groupValueInEl][m.name] = funOps[m.fun](previousMeasureVal, el[m.name])
+                            groupObj[groupValueInEl][m.name] = funOps[m.fun](previousMeasureVal, el[m.name]);
                         })
 
                     } else {
                         // If not last groupt then assigne last group obj to reference for future iterations.
-                        lastG = dimensionObj[dimensionValueInEl][g][groupValueInEl]
+                        lastG = dimensionObj[dimensionValueInEl][g][groupValueInEl];
                     }
 
                 });
 
-                container = result.output
+                container = result.output;
 
             } else {
                 // If not last dimension then assign last dimesion object to container for future iterations
-                container = dimensionObj[dimensionValueInEl]
+                container = dimensionObj[dimensionValueInEl];
             }
 
         });
@@ -256,4 +256,4 @@ const output = massageData(
 );
 
 // This massaged data can be further pivoted/trasnformed as per display needs(if other format is required for display)
-console.log(JSON.stringify(output, null, 2))
+console.log(JSON.stringify(output, null, 2));
