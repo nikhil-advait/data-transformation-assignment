@@ -1,5 +1,5 @@
 /*
-********* Following is given problem statement *************
+************************************************ Following is given problem statement *****************************************************
 
 // input -  array of json objects
 // input - pivot columns
@@ -56,7 +56,7 @@ measures = [{name: 'revenue', fun: 'sum'},{name: 'tax', fun: 'sum'}]
  ]
 
 
- ********* My understanding  *************
+ ***************************************************** My understanding  ******************************************************************
 
  Actually output for above problem statement should be like:
 
@@ -94,7 +94,7 @@ measures = [{name: 'revenue', fun: 'sum'},{name: 'tax', fun: 'sum'}]
 
 
 
- If more than one dimention/groupBy given
+ If more than one dimension/groupBy given
  e.g.
 
   dimension= ['category', 'rating']
@@ -151,9 +151,86 @@ measures = [{name: 'revenue', fun: 'sum'},{name: 'tax', fun: 'sum'}]
 
  */
 
+
+// Aggregation operations
+const funOps = {
+    sum: (previous, current) => {
+        return previous + current
+    },
+    avg: () => { },
+    count: () => { }
+}
+
+
+
+// This function transforms the data to give expected output as explained above.
+const massageData = (data, dimensions, groupBy, measures) => {
+    const result = {};
+    result.output = {}
+
+    // container reference to hold last dimension object.
+    let container = result.output;
+
+    data.forEach(el => {
+        // d is dimension and i is index of the dimension
+        dimensions.forEach((d, i) => {
+            // Assigne empty object if value is not assigned already.
+            container[d] = container[d] || {};
+
+            const dimensionObj  = container[d]
+            const dimensionValueInEl = el[d];
+
+            dimensionObj[dimensionValueInEl] = dimensionObj[dimensionValueInEl] || {}
+
+            // If last dimension
+            if (i === dimensions.length - 1) {
+                // Hold last group object reference in lastG.
+                let lastG = dimensionObj[dimensionValueInEl];
+
+                // g is group and j is index of the group
+                groupBy.forEach((g, j) => {
+
+                    lastG[g] = lastG[g] || {};
+                    const groupObj = lastG[g]
+                    const groupValueInEl = el[g]
+
+                    groupObj[groupValueInEl] = groupObj[groupValueInEl] || {};
+
+                    // If last group
+                    if (j === groupBy.length - 1) {
+
+                        // m is the measure
+                        measures.forEach(m => {
+                            const previousMeasureVal = groupObj[groupValueInEl][m.name] || 0;
+                            groupObj[groupValueInEl][m.name] = funOps[m.fun](previousMeasureVal, el[m.name])
+                        })
+
+                    } else {
+                        // If not last groupt then assigne last group obj to reference for future iterations.
+                        lastG = dimensionObj[dimensionValueInEl][g][groupValueInEl]
+                    }
+
+                });
+
+                container = result.output
+
+            } else {
+                // If not last dimension then assign last dimesion object to container for future iterations
+                container = dimensionObj[dimensionValueInEl]
+            }
+
+        });
+
+    });
+
+    return result.output;
+};
+
+
 const data = [
     { category: 'laptop', rating: 1, revenue: 10000, tax: 100, month: 'jan', year: 2019, day: 2 },
     { category: 'laptop', rating: 1, revenue: 20000, tax: 200, month: 'jan', year: 2019, day: 19 },
+    { category: 'laptop', rating: 1, revenue: 30000, tax: 300, month: 'jan', year: 2019, day: 9 },
     { category: 'laptop', rating: 1, revenue: 10000, tax: 100, month: 'feb', year: 2019 },
     { category: 'laptop', rating: 1, revenue: 10000, tax: 100, month: 'jan', year: 2020 },
     { category: 'ipad', rating: 2, revenue: 20000, tax: 200, month: 'feb', year: 2019 },
@@ -170,75 +247,13 @@ const data = [
     { category: 'laptop', rating: 4, revenue: 50000, tax: 500, month: 'jan', year: 2019 }
 ];
 
-
-const funOps = {
-    sum: (previous, current) => {
-        return previous + current
-    },
-    avg: () => { },
-    count: () => { }
-}
-
-const massageData = (data, dimensions, groupBy, measures) => {
-    const op = {};
-    op.x = {}
-    let lastD = op.x;
-
-
-    data.forEach((el, z) => {
-
-        dimensions.forEach((d, i) => {
-
-            // {category: {} }
-            lastD[d] = lastD[d] || {};
-
-            // {category: {laptop: {}}}
-            lastD[d][el[d]] = lastD[d][el[d]] || {}
-
-            if (i === dimensions.length - 1) {
-                let lastG = lastD[d][el[d]];
-
-                groupBy.forEach((g, j) => {
-
-                    lastG[g] = lastG[g] || {};
-
-                    lastG[g][el[g]] = lastG[g][el[g]] || {};
-
-                    if (j === groupBy.length - 1) {
-
-
-                        measures.forEach(m => {
-                            const lastVal = lastG[g][el[g]][m.name] || 0;
-                            lastG[g][el[g]][m.name] = funOps[m.fun](lastVal, el[m.name])
-                        })
-
-
-                    } else {
-                        lastG = lastD[d][el[d]][g][el[g]]
-                    }
-
-                });
-
-                lastD = op.x
-
-
-            } else {
-
-                lastD = lastD[d][el[d]]
-
-            }
-
-        });
-
-    });
-
-    console.log('hey', JSON.stringify(op, null, 2))
-};
-
-
-massageData(
+// Call messageData function with inputs as - data, dimensions, groupBy, measures
+const output = massageData(
     data,
     ['category', 'rating'],
     ['year', 'month'],
     [{name: 'revenue', fun: 'sum'},{name: 'tax', fun: 'sum'}]
 );
+
+// This massaged data can be further pivoted/trasnformed as per display needs(if other format is required for display)
+console.log(JSON.stringify(output, null, 2))
